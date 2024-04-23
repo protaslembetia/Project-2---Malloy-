@@ -1,0 +1,146 @@
+>>>markdown
+
+##### Protas Lembetia  
+
+#### Malloy / Project #2 - Analyzing USA Accidents across 49 states from February 2016 to March 2024 
+>>>markdown
+- `Objective:` The objective is to analyze and understand the trends and patterns in car accidents across 49 states of the USA from February 2016 to March 2023.
+>>>malloy
+source: Accidents is duckdb.table('US_Accidents.parquet') extend {
+    measure: 
+    Total_Accidents is count (ID)
+    Avg_accidents is avg(Severity)
+    rename: 
+    Temperature is `Temperature(F)`
+    Wind_Speed_MPH is `Wind_Speed(mph)`
+    view: by_state is {
+        group_by: State
+        aggregate: Total_Accidents
+    }
+    
+}
+>>>markdown
+#### Showing the Schema
+>>>malloy
+run: Accidents -> {
+  select: *
+  limit: 5
+
+}
+>>>markdown
+#### Proption level of accidents 
+>>>malloy
+
+run: Accidents -> {
+  group_by: Severity
+  aggregate:
+    Total_Accidents
+    Percent_Severity is Total_Accidents/ all(Total_Accidents)
+order_by: Percent_Severity desc
+}
+>>>markdown
+#### Accidents trends over time - Year
+>>>malloy
+# bar_chart
+run: Accidents -> {
+    group_by: Start_Time.year
+    aggregate:
+    Total_Accidents
+}
+>>>markdown
+#### Count of Car Accidents by Severity Level in 2022
+>>>malloy
+run: Accidents -> {
+    group_by: Severity, Start_Time.year
+   Where: year(Start_Time) = '2022' 
+   aggregate:
+     Total_Accidents
+order_by: Total_Accidents desc
+}
+>>>markdown
+#### States with the most accidents
+>>>malloy
+
+run: Accidents -> {
+  group_by: State 
+  aggregate: 
+  Total_Accidents
+  Limit: 10
+  # shape_map
+  nest: by_state
+}
+>>>markdown
+#### Cities with the most accidents
+>>>malloy
+# bar_chart
+run: Accidents -> {
+  group_by: City 
+  aggregate: 
+  Total_Accidents
+Limit: 40
+}
+>>>markdown
+#### Impact of Weather condition and time of day on accidents 
+>>>malloy
+
+run: Accidents -> {
+  group_by: Weather_Condition, Sunrise_Sunset
+  aggregate:
+    Total_Accidents
+order_by: Total_Accidents desc
+limit: 10
+}
+>>>markdown
+#### Which conditions lead to most accidents?
+>>>malloy
+# bar_chart
+run: Accidents -> {
+  group_by: Weather_Condition
+  aggregate:
+    Total_Accidents
+Limit: 20
+}
+>>>markdown
+#### States and Cities with most car accidents in 2020
+>>>malloy
+
+run: Accidents -> {
+group_by: State, City
+aggregate:
+    Total_Accidents
+Where: year(Start_Time) = '2020'
+Limit: 25
+}
+>>>markdown
+#### States with most car accidents in 2020
+>>>malloy
+# bar_chart
+run: Accidents -> {
+group_by: State
+aggregate:
+    Total_Accidents
+Where: year(Start_Time) = '2020'
+Limit: 25
+}
+>>>markdown
+#### Average Severity of Car Accidents over the years 
+>>>malloy
+# bar_chart
+run: Accidents -> {
+    group_by: Start_Time.year
+    aggregate:
+    Avg_accidents 
+}
+>>>markdown
+#### States with most severe (Level 4) Car Accidents
+>>>malloy
+
+run: Accidents -> {
+    group_by: State, Severity
+    aggregate:
+    Total_Accidents
+    Where: Severity = 4
+Limit: 10
+# shape_map
+Nest: by_state
+}
